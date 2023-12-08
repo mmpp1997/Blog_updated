@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/styles/form.css">
+    <title>Post</title>
+</head>
+<body>
+    <%var path="/form";%>
+    <%if(locals.data){%>
+        <%path="/edit/"+data.id%>
+    <%}%>
+    <form class="box" action=<%=path%> method="POST">
+        <div class="grid-container">
+            <div class="grid-item one">
+                <input name="title" type="text" class="titl" title="Title of the post" placeholder="Enter the title to your post" required <%if(locals.data){%>value="<%=data.title%>"<%}%>/>
+            </div>
+            <div class="grid-item two">
+                <input name="name" type="text" title="Username" placeholder="Username" required <%if(locals.data){%>value="<%=data.name%>"<%}%>/>
+                <select name="topic" title="Topic of the post">
+                    <%for(i=0;i<topics.length;i++){%>
+                    <option <%if(locals.data && locals.data.topic==topics[i].name){%><%=selected="selected" %><%}%> ><%=topics[i].name%></option>
+                    <%}%>
+                </select>
+            </div>
+            <div  class="grid-item three">
+                <textarea name="text" title="Text of the post" placeholder="What do you wonna post about" required><%if(locals.data){%><%=data.text%><%}%></textarea>
+            </div>
+            <div  class="grid-item four">
+                <input type="submit" value="<%=task%>" class="btn green"/>
+                <a href="/" class="link"><input type="button" value="BACK" class="btn"/></a>
+            </div>
+        </div>
+    </form>
+</body>
+</html>

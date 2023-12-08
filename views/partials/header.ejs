@@ -1,0 +1,37 @@
+<head>
+    <link rel="stylesheet" href="/styles/header.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+<header>
+    <a class="title" href="/">My Blog Site</a>
+    <%if(locals.topics){%>
+        <form class="header-form hidden" action="/filter" method="POST">
+            <select name="topic"  onchange="this.form.submit()">
+                <option <%if(locals.selectedTopic && locals.selectedTopic=="All Posts"){%><%=selected="selected" %><%}%>>All Posts</option>
+                <%for(i=0;i<topics.length;i++){%>
+                <option <%if(locals.selectedTopic && locals.selectedTopic==topics[i].name){%><%=selected="selected" %><%}%>><%=topics[i].name%></option>
+                <%}%>
+            </select>
+        </form>
+    <%}%>
+    <a class="new-btn hidden" href="/form">New post</a>
+    <a id="menu-btn" class="menu-btn"><img src="/images/menu.svg" alt="Menu"></a>
+</header>
+<div id="menu">
+    <a id="btn" class="new-btn" href="/form">New post</a>
+    <%if(locals.topics){%>
+        <form id="form"class="header-form" action="/filter" method="POST">
+            <select name="topic" onchange="this.form.submit()">
+                <option <%if(locals.selectedTopic && locals.selectedTopic=="All Posts"){%><%=selected="selected" %><%}%>>All Posts</option>
+                <%for(i=0;i<topics.length;i++){%>
+                <option <%if(locals.selectedTopic && locals.selectedTopic==topics[i].name){%><%=selected="selected" %><%}%>><%=topics[i].name%></option>
+                <%}%>
+            </select>
+        </form>
+    <%}%>
+</div>
+<script>
+    $( "#menu-btn" ).on( "click", function(){
+        $("#menu").toggle();
+    });
+</script>

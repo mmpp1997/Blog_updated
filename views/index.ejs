@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles/index.css">
+    <title>My Blog Site</title>
+</head>
+<body>
+    <div class="grid-container">
+        <div>
+            <%- include('partials/header.ejs') %>
+        </div>
+        <div class="page-body">
+            <% if(locals.data.length>0){%>
+                <%  for(var i=0;i<data.length;i++){%>
+                    <div class="post">
+                        <% const backgroundColor ="background-color: "+data[i].color%>
+                        <div class="topic"style="<%=backgroundColor %>">
+                            <p ><%= data[i].topic %></p>
+                        </div>
+                        <div  class="post-title">
+                            <p><%= data[i].title %></p>
+                        </div>
+                        <div class="btn-about">
+                            <a href="/details/<%=data[i].id%>">About</a>
+                        </div>
+                        
+                    </div>
+                <%}%>
+            <%}else{%>
+                <div class="empty">
+                    <p>Be the first to post something</p>
+                </div>
+                
+            <%}%>
+        </div>
+        <div class="grid-item">
+            <%- include('partials/footer.ejs') %>
+        </div>
+    </div>
+</body>
+</html>
