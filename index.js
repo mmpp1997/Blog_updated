@@ -1,11 +1,20 @@
+import 'dotenv/config'
 import express from "express";
 import bodyParser from "body-parser";
-//soon to be updated 
-
+import pg from "pg";
 
 const app = express();
 const port = 3000;
-var posts=[];
+
+const db = new pg.Client({
+  user: "postgres",
+  host: "localhost",
+  database: "Blog",
+  password: process.env.PASSWORD,
+  port: 5432,
+});
+db.connect();
+
 var selectedTopic="All Posts";
 var topics=[
   {name:"General",color:"orange"},
@@ -17,10 +26,19 @@ var topics=[
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.get("/", (req, res) => {
+async function getPosts() {
+  const posts=[];
+  const result = await db.query("SELECT posts.*,users.nickname FROM users INNER JOIN posts ON users.id=posts.userId ORDER BY id ASC;");
+  result.rows.forEach(row => {
+    posts.push(row);
+  });
+  return posts;
+}
+
+app.get("/", async(req, res) => {
   selectedTopic="All Posts";
   res.render("index.ejs",{
-    data: posts,
+    data: await getPosts(),
     topics:topics,
     selectedTopic:selectedTopic
 });
@@ -31,36 +49,39 @@ app.get("/form", (req, res) => {
     task:"POST"
   });
 });
-app.get("/details/:id", (req, res) => {
+app.get("/details/:id", async(req, res) => {
   const id= req.params.id;
-  const postIndex=posts.findIndex((post)=>post.id==id);
+  const result = await db.query("SELECT * FROM posts WHERE id=$1",[id]);
+  const data=result.rows[0];
   res.render("details.ejs",{
-    about:posts[postIndex]
+    about:data
   });
 });
-app.get("/delete/:id", (req, res) => {
+app.get("/delete/:id", async(req, res) => {
   const id= req.params.id;
-  const postIndex=posts.findIndex((post)=>post.id==id);
-  posts.splice(postIndex,1)
+  await db.query("DELETE FROM posts WHERE id=$1;",[id]);
   res.redirect("/");
 });
-app.get("/edit/:id", (req, res) => {
+
+app.get("/edit/:id", async(req, res) => {
   const id= req.params.id;
-  const postIndex=posts.findIndex((post)=>post.id==id);
+  const result = await db.query("SELECT id, title, text, topic, userid FROM posts WHERE id=$1",[id])
+  const data=result.rows[0];
   res.render("form.ejs",{
-    data:posts[postIndex],
+    data:data,
     task:"EDIT",
     topics:topics
   });
 });
-app.post("/filter", (req, res) => {
+app.post("/filter", async(req, res) => {
   const topic= req.body.topic;
   var data;
   if(topic=="All Posts"){
-    data=posts;
+    data=await getPosts();
   }
   else{
-    data=posts.filter((post)=>post.topic==topic);
+    const result = await db.query("SELECT * FROM posts WHERE topic=$1",[topic]);
+    data=result.rows;
   }
   selectedTopic=topic;
   res.render("index.ejs",{
@@ -70,44 +91,19 @@ app.post("/filter", (req, res) => {
   });
 });
 
-app.post("/form", (req, res) => {
-  var id=Math.floor(Math.random()*10000);
-  for(i=0;i<posts.length;i++){
-    if(id==posts[i].id){
-      id=Math.floor(Math.random()*10000);
-      i=0;
-    }
-  };
+app.post("/form", async(req, res) => {
   const topic=topics.find((topic)=>topic.name==req.body.topic);
-  var post={
-    id:id,
-    title:req.body["title"],
-    name:req.body["name"],
-    topic:req.body["topic"],
-    color:topic.color,
-    text:req.body["text"]};
-  posts.push(post);
+  await db.query("INSERT INTO posts(title, topic, color, userId, text) VALUES ($1,$2,$3,$4,$5);",
+  [req.body.title,req.body.topic,topic.color,1,req.body.text]);
   res.redirect('/');
 });
 
-app.post("/edit/:id", (req, res) => {
+app.post("/edit/:id", async(req, res) => {
   const id= req.params.id;
-  const postIndex=posts.findIndex((post)=>post.id==id);
-  if(posts[postIndex].title!=req.body.title){
-    posts[postIndex].title=req.body.title;
-  }
-  if(posts[postIndex].name!=req.body.name){
-    posts[postIndex].name=req.body.name;
-  }
-  if(posts[postIndex].text!=req.body.text){
-    posts[postIndex].text=req.body.text;
-  }
-  if(posts[postIndex].topic!=req.body.topic){
-    posts[postIndex].topic=req.body.topic;
-    const topic=topics.find((topic)=>topic.name==req.body.topic);
-    posts[postIndex].color=topic.color;
-  }
-  res.redirect('/details/'+posts[postIndex].id);
+  const topic=topics.find((topic)=>topic.name==req.body.topic);
+  await db.query("UPDATE posts SET title = ($1), text = ($2), topic = ($3), color = ($4) WHERE id = ($5)",
+  [req.body.title, req.body.text, topic.name, topic.color, id]);
+  res.redirect('/details/'+id);
 });
 
 app.listen(port, () => {
