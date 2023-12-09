@@ -1,6 +1,11 @@
-<head>
-    <link rel="stylesheet" href="/styles/footer.css">
-</head>
 <footer>
+    <%if(locals.weather){%>
+        <div class="weather-flex">
+            <img src="<%=locals.weather.image%>" alt="weather">
+            <p><%=locals.weather.text%></p>
+        </div>
+    <%}%>
     <a class="my-info" href="https://github.com/mmpp1997/">@Mario Pedisic</a>
+    <a class="log-out" href="/">Log Out</a>
+    
 </footer>

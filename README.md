@@ -1,9 +1,11 @@
-#blog_ejs
-##Completed
+# blog_ejs
+## Completed
 ### added dotenv module and variables
 ### added pg module and CRUD methods
+### aded public API with axios for local weather
+### register and login pages with post and get routes
 
-#dodati public API za lokalnu vremensku prognozu
-#dodati register i login (passport-hashing and salting, cookies and sheassons)
-#dodati login google (oauth 2.0)
+## To Do
+### add register i login (passport-hashing and salting, cookies and sheassons)
+### add login google (oauth 2.0)
 

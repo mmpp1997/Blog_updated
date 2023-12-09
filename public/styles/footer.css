@@ -5,9 +5,27 @@
 footer{
     height: 100%;
     display: flex;
-    justify-content: center;
+    justify-content: space-evenly;
     align-items: center;
     background-color: var(--secondary-color);
+    margin-bottom: 0px;
+    padding-bottom: 0px;
+
+}
+.log-out{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0px;
+    padding-left: 10px;
+    padding-right: 10px;
+    height: 80%;
+    font-size: 30px;
+    color: white;
+    text-decoration: none;
+    background-color: red;
+    border-radius: 20px;
+    white-space: nowrap;
 }
 .my-info{
     margin: 0px;
@@ -16,4 +34,21 @@ footer{
     color: white;
     text-decoration: none;
     background-color: transparent;
+    white-space: nowrap;
+}
+.weather-flex{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.weather-flex>*{
+    background-color: transparent;
+    margin: 0px;
+    padding: 0px;
+    height: 80%;
+    font-size: 30px;
+    color: white;
+}
+@media only screen and (max-width: 600px) {
+    .weather-flex{ display: none;}
 }

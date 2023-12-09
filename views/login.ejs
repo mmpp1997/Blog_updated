@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/styles/login.css">
+    <title>Post</title>
+</head>
+<body>
+    <form class="box" action="/<%=task%>" method="POST">
+        <div class="grid-container">
+            <div class="grid-item one">
+                <input name="email" type="text" class="titl" title="Enter your email" placeholder="Enter your email" required/>
+            </div>
+            <div class="grid-item two">
+                <input name="password" type="password" title="Password" placeholder="Enter your password" required/>
+            </div>
+            <%if(task=="register"){%>
+                <div class="grid-item two">
+                    <input name="nickname" type="text" title="Enter your nickname" placeholder="Enter your nickname" required/>
+                </div>
+                <div class="grid-item two">
+                    <input name="location" type="text" title="Enter your hometown" placeholder="Enter your hometown" required/>
+                </div>
+            <%}%>
+            <div class="grid-item three">
+                <%if(task=="login"){%>
+                    <p>Not a user, <a class="reg" href="/reg">Register</a>?</p>
+                <%}else if(task=="register"){%>
+                    <p>already a user, <a class="reg" href="/">login</a>?</p>
+                <%}%>
+            </div>
+            <div  class="grid-item four">
+                <input type="submit" value="<%=task.toUpperCase()%>" class="btn green"/>
+                <a href="/" class="link"><input type="button" value="Login with Google" class="btn google"/></a>
+            </div>
+        </div>
+    </form>
+</body>
+</html>

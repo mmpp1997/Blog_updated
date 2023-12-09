@@ -12,7 +12,7 @@ body *{
 .grid-container{
     display: grid;
     height: 100vh;
-    grid-template-rows: 70px auto 35px;
+    grid-template-rows: 70px auto 60px;
 }
 .post{
     border: solid var(--main-color) 1px;

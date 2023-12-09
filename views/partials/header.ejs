@@ -1,9 +1,5 @@
-<head>
-    <link rel="stylesheet" href="/styles/header.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-</head>
 <header>
-    <a class="title" href="/">My Blog Site</a>
+    <a class="title" href="/post">My Blog Site</a>
     <%if(locals.topics){%>
         <form class="header-form hidden" action="/filter" method="POST">
             <select name="topic"  onchange="this.form.submit()">
