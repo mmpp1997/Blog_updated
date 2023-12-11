@@ -3,18 +3,72 @@ import express from "express";
 import bodyParser from "body-parser";
 import pg from "pg";
 import axios from "axios";
+import passport from "passport";
+import session from "express-session";
+import bcrypt from "bcrypt";
+import { Strategy as LocalStrategy }  from "passport-local";
+import connectPgSimple from "connect-pg-simple";
+import pgPromise from 'pg-promise';
 
+const pgSession = connectPgSimple(session);
+const pgp = pgPromise();
+const saltRounds = 10;
 const app = express();
 const port = 3000;
+app.use(express.static("public"));
+app.use(bodyParser.urlencoded({ extended: true }));
 
-const db = new pg.Client({
-  user: "postgres",
-  host: "localhost",
-  database: "Blog",
-  password: process.env.PASSWORD,
-  port: 5432,
+const db = pgp('postgres://postgres:'+process.env.PASSWORD+'@localhost:5432/Blog');
+
+const sessionConfig = {
+  store: new pgSession({
+    pool: db,
+    tableName: 'sessions'
+  }),
+  secret: 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
+};
+app.use(session(sessionConfig));
+
+passport.use(new LocalStrategy(
+  (username, password, done) => {
+    // Query the database to find the user
+    db.oneOrNone('SELECT * FROM users2 WHERE username = $1;', [username])
+      .then(user => {
+        if (!user) {
+          return done(null, false, { message: 'Incorrect username.' });
+        }
+
+        // Compare hashed password
+        bcrypt.compare(password, user.password, (err, result) => {
+          if (err) {
+            return done(err);
+          }
+          if (!result) {
+            return done(null, false, { message: 'Incorrect password.' });
+          }
+          
+          // Successful login
+          return done(null, user);
+        });
+      })
+      .catch(err => done(err));
+  }
+));
+app.use(passport.initialize());
+app.use(passport.session());
+// Serialize and deserialize user
+
+passport.serializeUser((user, done) => done(null, user.id));
+
+passport.deserializeUser((id, done) => {
+  db.oneOrNone('SELECT * FROM users WHERE id = $1', [id])
+    .then(user => done(null, user))
+    .catch(err => done(err));
 });
-db.connect();
+
 
 var selectedTopic="All Posts";
 var topics=[
@@ -24,14 +78,12 @@ var topics=[
   {name:"Movies",color:"yellow"},
   {name:"Other",color:"grey"}
 ]
-app.use(express.static("public"));
-app.use(bodyParser.urlencoded({ extended: true }));
 
 async function getPosts() {
   const posts=[];
   try {
     const result = await db.query("SELECT posts.*,users.nickname FROM users INNER JOIN posts ON users.id=posts.userId ORDER BY id ASC;");
-    result.rows.forEach(row => {
+    result.forEach(row => {
     posts.push(row);
     });
   } catch (error) {
@@ -70,14 +122,21 @@ app.get("/reg", async(req, res) => {
 });
 });
 
-app.post("/login", async(req, res) => {
-  res.redirect("/post");
+app.post('/login', 
+  passport.authenticate('local', { failureRedirect: '/login' }),
+  function(req, res) {
+    res.redirect('/post');
 });
+
 app.post("/register", async(req, res) => {
-  try {
-    await db.query("INSERT INTO users(email, password, nickname, location) VALUES ($1,$2,$3,$4);",
-    [req.body.email, req.body.password, req.body.nickname, req.body.location]);
-    res.redirect("/post");
+  try{
+    bcrypt.genSalt(saltRounds, function(err, salt) {
+      bcrypt.hash(req.body.password, salt, function(err, hash) {
+        db.query("INSERT INTO users2(username, password, nickname, location) VALUES ($1,$2,$3,$4);",
+        [req.body.username, hash, req.body.nickname, req.body.location]);
+        res.redirect("/post");
+      });
+    });
   } catch (error) {
     console.log(error)
   }
@@ -104,7 +163,7 @@ app.get("/details/:id", async(req, res) => {
   var data;
   try {
     const result = await db.query("SELECT * FROM posts WHERE id=$1",[id]);
-    data=result.rows[0];
+    data=result[0];
     
   } catch (error) {
     console.log(error)
@@ -129,7 +188,7 @@ app.get("/edit/:id", async(req, res) => {
   var data;
   try {
     const result = await db.query("SELECT id, title, text, topic, userid FROM posts WHERE id=$1",[id])
-    data=result.rows[0];
+    data=result[0];
   } catch (error) {
     console.log(error)
   }
@@ -149,7 +208,7 @@ app.post("/filter", async(req, res) => {
     }
     else{
       const result = await db.query("SELECT * FROM posts WHERE topic=$1",[topic]);
-      data=result.rows;
+      data=result;
     }
   } catch (error) {
     console.log(error);

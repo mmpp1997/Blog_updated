@@ -1,8 +1,8 @@
-CREATE TABLE users(
-    id SERIAL PRIMARY KEY,
-    email TEXT NOT NULL,
+CREATE TABLE users2(
+    id SERIAL PRIMARY KEY UNIQUE,
+    username TEXT NOT NULL UNIQUE,
 	password TEXT NOT NULL,
-    nickname TEXT NOT NULL,
+    nickname TEXT NOT NULL UNIQUE,
 	location TEXT NOT NULL
 );
 CREATE TABLE posts(
