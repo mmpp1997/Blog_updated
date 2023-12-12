@@ -1,7 +1,6 @@
 import 'dotenv/config'
 import express from "express";
 import bodyParser from "body-parser";
-import pg from "pg";
 import axios from "axios";
 import passport from "passport";
 import session from "express-session";
@@ -9,6 +8,7 @@ import bcrypt from "bcrypt";
 import { Strategy as LocalStrategy }  from "passport-local";
 import connectPgSimple from "connect-pg-simple";
 import pgPromise from 'pg-promise';
+import pg from "pg";
 
 const pgSession = connectPgSimple(session);
 const pgp = pgPromise();
@@ -16,26 +16,23 @@ const saltRounds = 10;
 const app = express();
 const port = 3000;
 app.use(express.static("public"));
+app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 
 const db = pgp('postgres://postgres:'+process.env.PASSWORD+'@localhost:5432/Blog');
 
-const sessionConfig = {
-  store: new pgSession({
-    pool: db,
-    tableName: 'sessions'
-  }),
-  secret: 'your-secret-key',
+app.use(session({
+  secret: process.env.SECRET,
   resave: false,
-  saveUninitialized: false,
-  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
-};
-app.use(session(sessionConfig));
+  saveUninitialized: false
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
 passport.use(new LocalStrategy(
   (username, password, done) => {
     // Query the database to find the user
-    db.oneOrNone('SELECT * FROM users2 WHERE username = $1;', [username])
+    db.oneOrNone('SELECT * FROM users WHERE username = $1;', [username])
       .then(user => {
         if (!user) {
           return done(null, false, { message: 'Incorrect username.' });
@@ -57,8 +54,7 @@ passport.use(new LocalStrategy(
       .catch(err => done(err));
   }
 ));
-app.use(passport.initialize());
-app.use(passport.session());
+
 // Serialize and deserialize user
 
 passport.serializeUser((user, done) => done(null, user.id));
@@ -91,9 +87,13 @@ async function getPosts() {
   }
   return posts;
 }
+async function GetPostData(id) {
+  const result = await db.query("SELECT posts.*, users.nickname, users.username FROM posts"+
+  " INNER JOIN users ON posts.userid=users.id WHERE posts.id=$1;",[id]);
+  return result[0];
+}
 
-async function GetWeather(){
-  const location="London"
+async function GetWeather(location){
   var data;
   try {
     const response = await axios.get("http://api.weatherapi.com/v1/current.json?",
@@ -122,34 +122,41 @@ app.get("/reg", async(req, res) => {
 });
 });
 
-app.post('/login', 
-  passport.authenticate('local', { failureRedirect: '/login' }),
-  function(req, res) {
-    res.redirect('/post');
-});
+
+app.post ("/login", passport.authenticate('local', {
+  successRedirect: "/post",
+  failureRedirect: "/",
+}))
 
 app.post("/register", async(req, res) => {
   try{
     bcrypt.genSalt(saltRounds, function(err, salt) {
       bcrypt.hash(req.body.password, salt, function(err, hash) {
-        db.query("INSERT INTO users2(username, password, nickname, location) VALUES ($1,$2,$3,$4);",
+        db.query("INSERT INTO users(username, password, nickname, location) VALUES ($1,$2,$3,$4);",
         [req.body.username, hash, req.body.nickname, req.body.location]);
-        res.redirect("/post");
       });
     });
+    res.redirect("/");
   } catch (error) {
     console.log(error)
   }
 });
+
 app.get("/post", async(req, res) => {
-  const weather= await GetWeather();
-  selectedTopic="All Posts";
-  res.render("index.ejs",{
-    data: await getPosts(),
-    topics:topics,
-    selectedTopic:selectedTopic,
-    weather:weather
-});
+  if (req.isAuthenticated()){
+    console.log(req.user);
+    const weather= await GetWeather(req.user.location);
+    selectedTopic="All Posts";
+    res.render("index.ejs",{
+      data: await getPosts(),
+      topics:topics,
+      selectedTopic:selectedTopic,
+      weather:weather,
+      user:req.user.nickname
+    });
+  }else{
+    res.redirect("/");
+  }
 });
 app.get("/form", (req, res) => {
   res.render("form.ejs",{
@@ -162,9 +169,7 @@ app.get("/details/:id", async(req, res) => {
   const weather= await GetWeather();
   var data;
   try {
-    const result = await db.query("SELECT * FROM posts WHERE id=$1",[id]);
-    data=result[0];
-    
+    data=await GetPostData(id);
   } catch (error) {
     console.log(error)
   }
@@ -187,8 +192,7 @@ app.get("/edit/:id", async(req, res) => {
   const id= req.params.id;
   var data;
   try {
-    const result = await db.query("SELECT id, title, text, topic, userid FROM posts WHERE id=$1",[id])
-    data=result[0];
+    data=await GetPostData(id);
   } catch (error) {
     console.log(error)
   }
@@ -222,7 +226,7 @@ app.post("/filter", async(req, res) => {
   });
 });
 
-app.post("/form", async(req, res) => {
+app.post("/add", async(req, res) => {
   const topic=topics.find((topic)=>topic.name==req.body.topic);
   try {
     await db.query("INSERT INTO posts(title, topic, color, userId, text) VALUES ($1,$2,$3,$4,$5);",
@@ -244,6 +248,13 @@ app.post("/edit/:id", async(req, res) => {
     console.log(error);
   }
   res.redirect('/details/'+id);
+});
+
+app.get('/logout', function(req, res, next) {
+  req.logout(function(err) {
+    if (err) { return next(err); }
+    res.redirect('/');
+  });
 });
 
 app.listen(port, () => {
