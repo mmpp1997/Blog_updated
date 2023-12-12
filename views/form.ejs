@@ -17,7 +17,7 @@
                 <input name="title" type="text" class="titl" title="Title of the post" placeholder="Enter the title to your post" required <%if(locals.data){%>value="<%=data.title%>"<%}%>/>
             </div>
             <div class="grid-item two">
-                <input name="name" type="text" title="Username" placeholder="Username" required <%if(locals.data){%>value="<%=data.nickname%>"<%}%>/>
+                <input name="name" type="text" title="Username" placeholder="Username" disabled value="<%=locals.user%>"/>
                 <select name="topic" title="Topic of the post">
                     <%for(i=0;i<topics.length;i++){%>
                     <option <%if(locals.data && locals.data.topic==topics[i].name){%><%=selected="selected" %><%}%> ><%=topics[i].name%></option>

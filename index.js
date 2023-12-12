@@ -6,11 +6,8 @@ import passport from "passport";
 import session from "express-session";
 import bcrypt from "bcrypt";
 import { Strategy as LocalStrategy }  from "passport-local";
-import connectPgSimple from "connect-pg-simple";
 import pgPromise from 'pg-promise';
-import pg from "pg";
 
-const pgSession = connectPgSimple(session);
 const pgp = pgPromise();
 const saltRounds = 10;
 const app = express();
@@ -144,7 +141,6 @@ app.post("/register", async(req, res) => {
 
 app.get("/post", async(req, res) => {
   if (req.isAuthenticated()){
-    console.log(req.user);
     const weather= await GetWeather(req.user.location);
     selectedTopic="All Posts";
     res.render("index.ejs",{
@@ -159,26 +155,42 @@ app.get("/post", async(req, res) => {
   }
 });
 app.get("/form", (req, res) => {
+  if (req.isAuthenticated()){
   res.render("form.ejs",{
     topics:topics,
-    task:"POST"
+    task:"POST",
+    user:req.user.nickname
   });
+  }else{
+    res.redirect("/");
+  }
 });
 app.get("/details/:id", async(req, res) => {
+  if (req.isAuthenticated()){
   const id= req.params.id;
-  const weather= await GetWeather();
+  const weather= await GetWeather(req.user.location);
   var data;
   try {
     data=await GetPostData(id);
   } catch (error) {
     console.log(error)
   }
+  var isAuthor=false;
+  if(data.nickname==req.user.nickname){
+    isAuthor=true;
+  }
   res.render("details.ejs",{
     about:data,
-    weather:weather
+    weather:weather,
+    user:req.user.nickname,
+    isAuthor:isAuthor
   });
+  }else{
+    res.redirect("/");
+  }
 });
 app.get("/delete/:id", async(req, res) => {
+  if (req.isAuthenticated()){
   const id= req.params.id;
   try {
     await db.query("DELETE FROM posts WHERE id=$1;",[id]);
@@ -186,9 +198,13 @@ app.get("/delete/:id", async(req, res) => {
     console.log(error)
   }
   res.redirect("/post");
+  }else{
+    res.redirect("/");
+  }
 });
 
 app.get("/edit/:id", async(req, res) => {
+  if (req.isAuthenticated()){
   const id= req.params.id;
   var data;
   try {
@@ -199,16 +215,28 @@ app.get("/edit/:id", async(req, res) => {
   res.render("form.ejs",{
     data:data,
     task:"EDIT",
-    topics:topics
+    topics:topics,
+    user:data.nickname
   });
+  }else{
+    res.redirect("/");
+  }
 });
 app.post("/filter", async(req, res) => {
   const topic= req.body.topic;
   var data;
-  const weather= await GetWeather();
+  const weather= await GetWeather(req.user.location);
   try {
     if(topic=="All Posts"){
       data=await getPosts();
+    }
+    else if(topic=="My Posts"){
+      const result = await db.query("SELECT * FROM posts WHERE userid=$1",[req.user.id]);
+      data=result;
+    }
+    else if(topic=="Other People"){
+      const result = await db.query("SELECT * FROM posts WHERE userid!=$1",[req.user.id]);
+      data=result;
     }
     else{
       const result = await db.query("SELECT * FROM posts WHERE topic=$1",[topic]);
@@ -222,7 +250,8 @@ app.post("/filter", async(req, res) => {
     topics:topics,
     data:data,
     selectedTopic:selectedTopic,
-    weather:weather
+    weather:weather,
+    user:req.user.nickname
   });
 });
 
@@ -230,7 +259,7 @@ app.post("/add", async(req, res) => {
   const topic=topics.find((topic)=>topic.name==req.body.topic);
   try {
     await db.query("INSERT INTO posts(title, topic, color, userId, text) VALUES ($1,$2,$3,$4,$5);",
-    [req.body.title,req.body.topic,topic.color,1,req.body.text]);
+    [req.body.title,req.body.topic,topic.color,req.user.id,req.body.text]);
     
   } catch (error) {
     console.log(error);
@@ -251,10 +280,14 @@ app.post("/edit/:id", async(req, res) => {
 });
 
 app.get('/logout', function(req, res, next) {
+  if (req.isAuthenticated()){
   req.logout(function(err) {
     if (err) { return next(err); }
     res.redirect('/');
   });
+  }else{
+    res.redirect('/');
+  }
 });
 
 app.listen(port, () => {

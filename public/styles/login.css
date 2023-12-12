@@ -94,8 +94,20 @@ a:hover{
     margin-right: 20px;
 }
 .google{
-    width: 300px;
-    background-color: red;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #DB4437;
+    border-radius: 20px;
+    padding: 5px;
+}
+a{
+    color: white;
+    text-decoration: none;
+}
+img{
+    width: 40px;
+    margin-left: 5px;
 }
 .green{
     background-color: #23ad07;

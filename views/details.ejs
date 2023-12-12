@@ -26,8 +26,10 @@
                     <p><%= about.text %></p>
                 </div>
                 <div class="wrap">
-                    <a class="green btn" href="/edit/<%=about.id%>">Edit Post</a> 
-                    <a class="red btn" href="/delete/<%=about.id%>">Delete Post</a>
+                    <% if(locals.isAuthor){ %>
+                        <a class="green btn" href="/edit/<%=about.id%>">Edit Post</a> 
+                        <a class="red btn" href="/delete/<%=about.id%>">Delete Post</a>
+                    <% } %>
                 </div>
                       
             <%}else{%>

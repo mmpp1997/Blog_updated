@@ -7,6 +7,9 @@
                 <%for(i=0;i<topics.length;i++){%>
                 <option <%if(locals.selectedTopic && locals.selectedTopic==topics[i].name){%><%=selected="selected" %><%}%>><%=topics[i].name%></option>
                 <%}%>
+                <option disabled>────────</option>
+                <option <%if(locals.selectedTopic && locals.selectedTopic=="My Posts"){%><%=selected="selected" %><%}%>>My Posts</option>
+                <option <%if(locals.selectedTopic && locals.selectedTopic=="Other People"){%><%=selected="selected" %><%}%>>Other People</option>
             </select>
         </form>
     <%}%>
@@ -22,6 +25,9 @@
                 <%for(i=0;i<topics.length;i++){%>
                 <option <%if(locals.selectedTopic && locals.selectedTopic==topics[i].name){%><%=selected="selected" %><%}%>><%=topics[i].name%></option>
                 <%}%>
+                <option disabled>────────</option>
+                <option <%if(locals.selectedTopic && locals.selectedTopic=="My Posts"){%><%=selected="selected" %><%}%>>My Posts</option>
+                <option <%if(locals.selectedTopic && locals.selectedTopic=="Other People"){%><%=selected="selected" %><%}%>>Other People</option>
             </select>
         </form>
     <%}%>
