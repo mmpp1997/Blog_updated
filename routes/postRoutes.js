@@ -22,11 +22,20 @@ postRouter.post("/register", async (req, res) => {
             bcrypt.hash(req.body.password, salt, async function (err, hash) {
                 await db.query("INSERT INTO users(username, password, nickname, location) VALUES ($1,$2,$3,$4);",
                     [req.body.username, hash, req.body.nickname, req.body.location]);
+                if (err) {
+                    console.log(err);
+                    res.redirect("/reg");
+                } else {
+                    passport.authenticate("local")(req, res, function () {
+                        res.redirect("/post");
+                    });
+                }
             });
         });
-        res.redirect("/");
+
     } catch (error) {
         console.log(error)
+        res.redirect("/reg");
     }
 });
 

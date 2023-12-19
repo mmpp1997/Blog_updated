@@ -1,11 +1,12 @@
 //community modules 
-import 'dotenv/config'
+import 'dotenv/config';
 import express from "express";
 import bodyParser from "body-parser";
 import passport from "passport";
 import session from "express-session";
 //my imports 
 import strategy from './data/local-strategy.js';
+import google from './data/google-strategy.js';
 import getRouter from './routes/getRoutes.js';
 import postRouter from './routes/postRoutes.js';
 import db from './data/server.js';
@@ -36,6 +37,8 @@ passport.deserializeUser((id, done) => {
     .then(user => done(null, user))
     .catch(err => done(err));
 });
+
+passport.use(google);
 
 app.use("/", getRouter);
 app.use("/", postRouter);

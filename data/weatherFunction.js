@@ -2,6 +2,9 @@ import 'dotenv/config'
 import axios from "axios";
 
 async function GetWeather(location) {
+  if(location.length<2){
+    location="Zadar"
+  }
   var data;
   try {
     const response = await axios.get("http://api.weatherapi.com/v1/current.json?",

@@ -8,9 +8,14 @@ const getRouter = express.Router();
 
 //Get login page
 getRouter.get("/", async (req, res) => {
-  res.render("login.ejs", {
-    task: "login"
-  });
+  if (req.isAuthenticated()) {
+    res.redirect("/post");
+  }
+  else {
+    res.render("login.ejs", {
+      task: "login"
+    });
+  }
 });
 
 //Get register page
