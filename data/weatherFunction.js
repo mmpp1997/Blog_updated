@@ -3,7 +3,7 @@ import axios from "axios";
 
 async function GetWeather(location) {
   if(location.length<2){
-    location="Zadar"
+    location="London"
   }
   var data;
   try {

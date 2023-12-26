@@ -27,9 +27,9 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 passport.use(strategy);
+passport.use(google);
 
 // Serialize and deserialize user
-
 passport.serializeUser((user, done) => done(null, user.id));
 
 passport.deserializeUser((id, done) => {
@@ -38,7 +38,6 @@ passport.deserializeUser((id, done) => {
     .catch(err => done(err));
 });
 
-passport.use(google);
 
 app.use("/", getRouter);
 app.use("/", postRouter);

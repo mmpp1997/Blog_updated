@@ -3,6 +3,7 @@ import db from "../data/server.js";
 import { GetWeather } from "../data/weatherFunction.js";
 import { getPosts, GetPostData } from "../data/dataFunctions.js";
 import topics from "../data/topics.js";
+import passport from "passport";
 
 const getRouter = express.Router();
 
@@ -24,6 +25,27 @@ getRouter.get("/reg", async (req, res) => {
     task: "register"
   });
 });
+
+//Google login popup
+getRouter.get("/auth/google",
+  passport.authenticate('google', { scope: ["profile"] })
+);
+
+//Google redirect after login
+getRouter.get( '/auth/google/blog',
+    passport.authenticate( 'google', {
+        successRedirect: '/post',
+        failureRedirect: '/'
+}));
+
+// getRouter.get("/auth/google/blog",
+//   passport.authenticate('google', { failureRedirect: "/" }),
+//   function(req, res) {
+//     // Successful authentication, redirect to secrets.
+//     res.redirect("/post");
+// });
+
+  
 
 //Get posts page or homepage
 getRouter.get("/post", async (req, res) => {
